@@ -38,7 +38,7 @@ src/
 Class Model
 -----------
 
-The goal of the library is to abstract the particle itnerface from the data
+The goal of the library is to abstract the particle interface from the data
 representation. That is why Partio represents particles using three classes that
 inherit and provide more functionality
 
