@@ -380,7 +380,10 @@ AtNode* CPartioVizTranslator::ExportProcedural(AtNode* procedural, bool update)
             AiNodeDeclare(procedural, "arg_extraPPAttrs", "constant STRING");
             AiNodeSetStr(procedural, "arg_extraPPAttrs", m_customAttrs.asChar());
         }
+
+        ExportLightLinking(procedural);
     }
+
     return procedural;
 }
 
