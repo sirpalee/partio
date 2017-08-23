@@ -50,7 +50,7 @@ namespace {
     class partioVisualizerWriter : public MayaTransformWriter {
     public:
         partioVisualizerWriter(const MDagPath & iDag, const SdfPath& uPath, bool instanceSource, usdWriteJobCtx& jobCtx) :
-            MayaTransformWriter(iDag, uPath, instanceSource, jobCtx) {
+            MayaTransformWriter(iDag, uPath, instanceSource, jobCtx), mIsValid(false) {
             mUsdPrim = UsdGeomPoints::Define(getUsdStage(), getUsdPath()).GetPrim();
             TF_AXIOM(mUsdPrim);
 
@@ -105,11 +105,14 @@ namespace {
                 UsdClipsAPI clips(mUsdPrim);
                 clips.SetClipManifestAssetPath(SdfAssetPath(manifestPath));
                 clips.SetClipPrimPath("/points");
-                mPathBuffer.resize(mFormatString.length() + 1, '\0');
-                const auto numberOfFrames = std::max(1ul, static_cast<size_t>(getArgs().endTime - getArgs().startTime));
-                mClipTimes.reserve(numberOfFrames);
-                mClipAssetPaths.reserve(numberOfFrames);
-                mClipActive.reserve(numberOfFrames);
+                // We usually use %0xd where x is the number of digits, so the actual length
+                // is digit count - 4 and +1 for the last character. So that's digit count - 3.
+                mPathBuffer.resize(mFormatString.length() + match[2].str().length() - 3, '\0');
+                // We can't reserve anything here, because these parameters are only available in an internal, Luma branch.
+                // const auto numberOfFrames = std::max(1ul, static_cast<size_t>(getArgs().endTime - getArgs().startTime));
+                // mClipTimes.reserve(numberOfFrames);
+                // mClipAssetPaths.reserve(numberOfFrames);
+                // mClipActive.reserve(numberOfFrames);
 
             } else {
                 const auto cacheFile = cacheDir + cachePrefix;
@@ -118,7 +121,7 @@ namespace {
         }
 
         void write(const UsdTimeCode& usdTime) override {
-            if (usdTime.IsDefault()) { return; }
+            if (usdTime.IsDefault() || !mIsValid) { return; }
 
             UsdGeomPoints points(mUsdPrim);
             writeTransformAttrs(usdTime, points);

@@ -112,11 +112,11 @@ bool UsdPartIOFileFormat::CanRead(const std::string &file) const {
 bool UsdPartIOFileFormat::Read(const SdfLayerBasePtr& layerBase,
                                const std::string& resolvedPath,
                                bool metadataOnly) const {
-    auto layer = SdfLayer::CreateAnonymous(".usda");
-    auto stage = UsdStage::Open(layer);
+    auto layerBaseHandle = TfDynamic_cast<SdfLayerHandle>(layerBase);
+    if (!TF_VERIFY(layerBaseHandle)) {
+        return false;
+    }
 
-    auto pointsSchema = UsdGeomPoints::Define(stage, _pointsPath);
-    stage->SetDefaultPrim(pointsSchema.GetPrim());
     partio_t points(
         PARTIO::read(resolvedPath.c_str()), [](PARTIO::ParticlesData* d) { d->release(); });
     if (points == nullptr) {
@@ -124,12 +124,18 @@ bool UsdPartIOFileFormat::Read(const SdfLayerBasePtr& layerBase,
         return false;
     }
 
-    ScopeExit scopeExit([&layerBase, &layer]() { TfDynamic_cast<SdfLayerHandle>(layerBase)->TransferContent(layer); });
+    auto layer = SdfLayer::CreateAnonymous(".usda");
+    auto stage = UsdStage::Open(layer);
+
+    auto pointsSchema = UsdGeomPoints::Define(stage, _pointsPath);
+    stage->SetDefaultPrim(pointsSchema.GetPrim());
+
+    ScopeExit scopeExit([&layerBaseHandle, &layer]() { layerBaseHandle->TransferContent(layer); });
+
+    // Zero pointcounts are perfectly normal from applications like Houdini,
+    // in this case we have to stop issuing warnings, and setup the headers
+    // so stitch clip and similar utils work better.
     const auto pointCount = points->numParticles();
-    if (pointCount < 1) {
-        TF_WARN("[partIO] Particle count is zero in %s", resolvedPath.c_str());
-        return true;
-    }
 
     // We are trying to guess the frame of the cache here.
     // Also, regex in gcc 4.8.x is unreliable! So we have to use boost here.
@@ -152,27 +158,38 @@ bool UsdPartIOFileFormat::Read(const SdfLayerBasePtr& layerBase,
 
     PARTIO::ParticleAttribute attr;
     if (!_getAttribute<PARTIO::VECTOR>(points, _positionNames, attr, true)) { return false; }
-    pointsSchema.GetPointsAttr().Set(_convertAttribute<GfVec3f>(points, pointCount, attr), outTime);
+    const auto positions = _convertAttribute<GfVec3f>(points, pointCount, attr);
+    pointsSchema.GetPointsAttr().Set(positions, outTime);
 
     if (_getAttribute<PARTIO::VECTOR>(points, _velocityNames, attr)) {
         pointsSchema.GetVelocitiesAttr().Set(_convertAttribute<GfVec3f>(points, pointCount, attr), outTime);
     }
 
+    VtArray<float> widths;
     if (_getAttribute<PARTIO::FLOAT>(points, _radiusNames, attr)) {
-        auto radii = _convertAttribute<float>(points, pointCount, attr);
-        for (auto& radius : radii) {
-            radius = radius * 2.0f;
+        widths = _convertAttribute<float>(points, pointCount, attr);
+        for (auto& width : widths) {
+            width = width * 2.0f;
         }
-        pointsSchema.GetWidthsAttr().Set(radii, outTime);
+        pointsSchema.GetWidthsAttr().Set(widths, outTime);
     } else if (_getAttribute<PARTIO::VECTOR>(points, _scaleNames, attr)) {
-        VtArray<float> radii;
-        radii.reserve(pointCount);
+        widths.reserve(pointCount);
         for (auto i = decltype(pointCount){0}; i < pointCount; ++i) {
             const auto* scale = points->data<float>(attr, i);
             // Using the more complex logic for clarity. The compiler will optimize this. Hopefully.
-            radii.push_back(2.0f * (scale[0] + scale[1] + scale[2]) / 3.0f);
+            widths.push_back(2.0f * (scale[0] + scale[1] + scale[2]) / 3.0f);
         }
-        pointsSchema.GetWidthsAttr().Set(radii, outTime);
+        pointsSchema.GetWidthsAttr().Set(widths, outTime);
+    }
+
+    // In case there are no widths supplied
+    if (widths.size() != positions.size()) {
+        widths.resize(positions.size());
+    }
+
+    VtArray<GfVec3f> extent;
+    if (pointsSchema.ComputeExtent(positions, widths, &extent)) {
+        pointsSchema.GetExtentAttr().Set(extent, outTime);
     }
 
     if (_getAttribute<PARTIO::INT>(points, _idNames, attr)) {

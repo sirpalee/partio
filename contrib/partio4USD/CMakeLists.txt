@@ -8,6 +8,7 @@ set(CMAKE_INSTALL_RPATH "$ENV{USD_ROOT}/lib")
 include_directories($ENV{USD_ROOT}/include)
 link_directories($ENV{USD_ROOT}/lib)
 
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS regex python REQUIRED)
 find_package(PythonLibs REQUIRED)
 find_package(TBB REQUIRED)
