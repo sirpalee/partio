@@ -150,16 +150,6 @@ ELSE (LEGACY_BUILD_MODE)
         # Temp removal of the python bindings, have to figure out how to change the swig files
         #ADD_SUBDIRECTORY (src/py)
         ADD_SUBDIRECTORY (src/tests)
-
-        ## Search for useful libraries
-        find_package(GLUT REQUIRED)
-        IF(GLUT_FOUND)
-            INCLUDE_DIRECTORIES( ${GLUT_INCLUDE_PATH} )
-            LINK_DIRECTORIES (${GLUT_ROOT_PATH}/lib/x64)
-        ELSE(GLUT_FOUND)
-            INCLUDE_DIRECTORIES( ${GLUT_INCLUDE_PATH} )
-            LINK_DIRECTORIES ( ${GLUT_LIBRARY_PATH} )
-        ENDIF(GLUT_FOUND)
     ENDIF (BUILD_PARTIO_LIBRARY)
     #ADD_SUBDIRECTORY (src/houdini)
     #ADD_DEFINITIONS_SUBDIRECTORY (src/doc)

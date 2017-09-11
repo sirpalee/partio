@@ -35,6 +35,7 @@ include_directories(
    ${CMAKE_SOURCE_DIR}/src/lib
 )
 
+find_package(GLUT)
 IF(GLUT_FOUND AND OPENGL_FOUND)
     ADD_EXECUTABLE(partview partview.cpp)
     target_link_libraries(partview ${PARTIO_LIBRARIES} ${GLUT_LIBRARY} ${OPENGL_LIBRARY})
