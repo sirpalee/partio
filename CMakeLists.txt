@@ -108,11 +108,11 @@ ENDIF(ZLIB_FOUND)
 ## Make modules able to see partio library
 # Setup environment variable to link partio
 IF (WIN32)
-    SET( PARTIO_LIBRARIES freeglut zlib partio )
+    SET( PARTIO_LIBRARIES zlib partio )
 ELSEIF(APPLE)
-    SET( PARTIO_LIBRARIES ${GLUT_glut_LIBRARY} ${GLUT_cocoa_LIBRARY} ${ZLIB_LIBRARY} partio )
+    SET( PARTIO_LIBRARIES ${ZLIB_LIBRARY} partio )
 ELSEIF (UNIX)
-    SET( PARTIO_LIBRARIES glut z partio )
+    SET( PARTIO_LIBRARIES z partio )
 ENDIF()
 # make it so partio can be found
 INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/src/lib )
