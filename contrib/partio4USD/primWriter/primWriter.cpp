@@ -101,7 +101,7 @@ namespace {
                                          << match[3].str();
                 mFormatString = ss.str();
                 mIsValid = true;
-                mUsdPrim.GetReferences().AppendReference(SdfReference(manifestPath));
+                mUsdPrim.GetReferences().AddReference(SdfReference(manifestPath));
                 UsdClipsAPI clips(mUsdPrim);
                 clips.SetClipManifestAssetPath(SdfAssetPath(manifestPath));
                 clips.SetClipPrimPath("/points");
