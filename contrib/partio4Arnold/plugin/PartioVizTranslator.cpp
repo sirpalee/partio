@@ -15,6 +15,10 @@
 #include <maya/MFloatVector.h>
 #include <maya/MFileObject.h>
 
+namespace {
+    const AtString ginstanceName("ginstance");
+}
+
 void* CPartioVizTranslator::creator()
 {
     return new CPartioVizTranslator();
@@ -31,77 +35,130 @@ void CPartioVizTranslator::NodeInitializer(CAbTranslator context)
     enumNames.append("points");
     enumNames.append("spheres");
     enumNames.append("quads");
+#ifdef ARNOLD5
+    data.defaultValue.INT() = 0;
+#else
     data.defaultValue.INT = 0;
+#endif
     data.name = "aiRenderPointsAs";
     data.shortName = "ai_render_points_as";
     data.enums = enumNames;
     helper.MakeInputEnum(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.BOOL() = false;
+#else
     data.defaultValue.BOOL = false;
+#endif
     data.name = "aiOverrideRadiusPP";
     data.shortName = "ai_override_radiusPP";
     helper.MakeInputBoolean(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 1000000.0f;
+    data.min.FLT() = 0.0f;
+    data.softMax.FLT() = 1000000.0f;
+#else
     data.defaultValue.FLT = 1000000.0f;
+    data.min.FLT = 0.0f;
+    data.softMax.FLT = 1000000.0f;
+#endif
     data.name = "aiMaxParticleRadius";
     data.shortName = "ai_max_particle_radius";
     data.hasMin = true;
-    data.min.FLT = 0.0f;
     data.hasSoftMax = true;
-    data.softMax.FLT = 1000000.0f;
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 0.0f;
+    data.softMax.FLT() = 1.0f;
+#else
     data.defaultValue.FLT = 0.0f;
+    data.softMax.FLT = 1.0f;
+#endif
     data.name = "aiMinParticleRadius";
     data.shortName = "ai_min_particle_radius";
-    data.softMax.FLT = 1.0f;
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 0.2f;
+#else
     data.defaultValue.FLT = 0.2f;
+#endif
     data.name = "aiRadius";
     data.shortName = "ai_radius";
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 1.0f;
+#else
     data.defaultValue.FLT = 1.0f;
+#endif
     data.name = "aiRadiusMultiplier";
     data.shortName = "ai_radius_multiplier";
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 1.0f;
+    data.softMin.FLT() = 0.0f;
+#else
     data.defaultValue.FLT = 1.0f;
+    data.softMin.FLT = 0.0f;
+#endif
     data.name = "aiMotionBlurMultiplier";
     data.shortName = "ai_motion_blur_multiplier";
     data.hasMin = false;
     data.hasSoftMin = true;
-    data.softMin.FLT = 0.0f;
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 0.f;
+    data.min.FLT() = 0.f;
+    data.softMax.FLT() = 2.f;
+#else
     data.defaultValue.FLT = 0.f;
+    data.min.FLT = 0.f;
+    data.softMax.FLT = 2.f;
+#endif
     data.name = "aiStepSize";
     data.shortName = "ai_step_size";
     data.hasMin = true;
-    data.min.FLT = 0.f;
     data.hasSoftMax = true;
-    data.softMax.FLT = 2.f;
     data.hasSoftMin = false;
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.FLT() = 8.0f;
+    data.min.FLT() = 0.0f;
+    data.softMax.FLT() = 10.0f;
+    data.softMin.FLT() = 7.0f;
+#else
     data.defaultValue.FLT = 8.0f;
+    data.min.FLT = 0.0f;
+    data.softMax.FLT = 10.0f;
+    data.softMin.FLT = 7.0f;
+#endif
     data.name = "aiFilterSmallParticles";
     data.shortName = "ai_filter_small_particles";
     data.hasMin = true;
-    data.min.FLT = 0.0f;
     data.hasSoftMax = true;
-    data.softMax.FLT = 10.0f;
     data.hasSoftMin = true;
-    data.softMin.FLT = 7.0f;
     helper.MakeInputFloat(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.STR() = AtString("");
+#else
     data.defaultValue.STR = "";
+#endif
     data.name = "aiExportAttributes";
     data.shortName = "ai_export_attributes";
     helper.MakeInputString(data);
 
+#ifdef ARNOLD5
+    data.defaultValue.STR() = AtString("");
+#else
     data.defaultValue.STR = "";
+#endif
     data.name = "aiOverrideProcedural";
     data.shortName = "ai_override_procedural";
     helper.MakeInputString(data);
@@ -114,7 +171,7 @@ AtNode* CPartioVizTranslator::CreateArnoldNodes()
 
 void CPartioVizTranslator::Export(AtNode* anode)
 {
-    if (AiNodeIs(anode, "ginstance"))
+    if (AiNodeIs(anode, ginstanceName))
         ExportInstance(anode, GetMasterInstance());
     else
         ExportProcedural(anode, false);
@@ -128,7 +185,7 @@ void CPartioVizTranslator::ExportMotion(AtNode* anode, unsigned int step)
 
 void CPartioVizTranslator::Update(AtNode* anode)
 {
-    if (AiNodeIs(anode, "ginstance"))
+    if (AiNodeIs(anode, ginstanceName))
         ExportInstance(anode, GetMasterInstance());
     else
         ExportProcedural(anode, true);
@@ -138,7 +195,7 @@ void CPartioVizTranslator::UpdateMotion(AtNode* anode, unsigned int step)
 {
     ExportMatrix(anode, step);
 }
-#elif MTOA14
+#else
 void CPartioVizTranslator::ExportMotion(AtNode* anode)
 {
     ExportMatrix(anode);
@@ -155,7 +212,7 @@ AtNode* CPartioVizTranslator::ExportInstance(AtNode* instance, const MDagPath& m
 
 #ifdef MTOA12
     ExportMatrix(instance, 0);
-#elif MTOA14
+#else
     ExportMatrix(instance);
 #endif
 
@@ -178,7 +235,7 @@ void CPartioVizTranslator::ExportShaders()
     /// TODO: Test shaders with standins.
 #if MTOA12
     ExportPartioVizShaders(GetArnoldRootNode());
-#elif MTOA14
+#else
     ExportPartioVizShaders(GetArnoldNode());
 #endif
 }
@@ -194,7 +251,7 @@ void CPartioVizTranslator::ExportPartioVizShaders(AtNode* procedural)
     {
 #if MTOA12
         AtNode* shader = ExportNode(shadingGroupPlug);
-#elif MTOA14
+#else
         AtNode* shader = ExportConnectedNode(shadingGroupPlug);
 #endif
         if (shader != 0)
@@ -219,7 +276,7 @@ AtNode* CPartioVizTranslator::ExportProcedural(AtNode* procedural, bool update)
 
 #if MTOA12
     ExportMatrix(procedural, 0);
-#elif MTOA14
+#else
     ExportMatrix(procedural);
 #endif
     ProcessRenderFlags(procedural);
