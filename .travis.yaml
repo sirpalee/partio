@@ -3,6 +3,10 @@ dist: trusty
 language: cpp
 compiler: gcc
 
+branches:
+  only:
+    - travis
+
 before_install: 
   - sudo apt-get -qq update
 
