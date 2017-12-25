@@ -47,6 +47,7 @@ SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
 
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-std=c++11)
 
 include(GNUInstallDirs)
 
