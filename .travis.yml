@@ -10,6 +10,7 @@ branches:
 before_install: 
   - sudo apt-get -qq update
   - sudo apt-get install freeglut3-dev swig zlib1g-dev
+  - sudo apt-get install doxygen
 
 install:
   - echo "Hey 3!"
