@@ -12,9 +12,6 @@ before_install:
   - sudo apt-get install freeglut3-dev swig zlib1g-dev
   - sudo apt-get install doxygen
 
-install:
-  - echo "Hey 3!"
-
 script:
   - mkdir build && cd build
   - cmake ..
